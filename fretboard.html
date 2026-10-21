@@ -1,0 +1,141 @@
+```html
+<!DOCTYPE html>
+<meta charset="utf-8">
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<style>
+body{
+  background:#0b0f14;
+  color:white;
+  font-family:system-ui;
+  text-align:center;
+}
+
+.controls{
+  margin-bottom:15px;
+}
+
+.fretboard circle{
+  stroke:#555;
+  stroke-width:1.5px;
+}
+
+.fretboard text{
+  fill:#aaa;
+  font-size:10px;
+  text-anchor:middle;
+}
+
+.fretboard .stringLabel{
+  font-size:12px;
+  text-anchor:end;
+}
+
+</style>
+
+<h2>Interactive Guitar Fretboard - Scale Visualizer</h2>
+
+<div class="controls">
+Root
+<select id="root"></select>
+
+Scale
+<select id="scale">
+<option value="major">Major</option>
+<option value="minor">Minor</option>
+<option value="dorian">Dorian</option>
+<option value="pentatonic">Pentatonic</option>
+</select>
+</div>
+
+<svg width="900" height="300"></svg>
+
+<script>
+
+const notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const scales={
+  major:[0,2,4,5,7,9,11],
+  minor:[0,2,3,5,7,8,10],
+  dorian:[0,2,3,5,7,9,10],
+  pentatonic:[0,2,4,7,9]
+};
+
+const strings=["E","A","D","G","B","e"];
+const tuning=[4,9,2,7,11,4]; // pitch classes EADGBE
+const frets=13;
+
+const svg=d3.select("svg")
+const fretGroup=svg.append("g").attr("transform","translate(80,40)").attr("class","fretboard");
+const fretWidth=50;
+const fretHeight=30;
+
+// root selector
+const rootSel=d3.select("#root")
+notes.forEach((n,i)=> rootSel.append("option").attr("value",i).text(n));
+
+// scale selector
+const scaleSel=d3.select("#scale");
+
+// prepare fret data
+const fretsData=[];
+strings.forEach((s,i)=>{
+  for(let f=0;f<frets;f++){
+    fretsData.push({string:i,fret:f,pitch:(tuning[i]+f)%12});
+  }
+});
+
+// draw fret circles
+const fretNodes=fretGroup.selectAll(".fret")
+.data(fretsData)
+.enter()
+.append("circle")
+.attr("class","fret")
+.attr("cx",d=>d.fret*fretWidth)
+.attr("cy",d=>d.string*fretHeight)
+.attr("r",12)
+.attr("fill","#222")
+.attr("stroke","#555");
+
+// draw fret numbers
+fretGroup.selectAll(".fretNum")
+.data(d3.range(frets))
+.enter()
+.append("text")
+.attr("class","fretNum")
+.attr("x",d=>d*fretWidth)
+.attr("y",-8)
+.text(d=>d)
+.attr("fill","#aaa")
+.attr("text-anchor","middle");
+
+// draw string labels
+fretGroup.selectAll(".stringLabel")
+.data(strings)
+.enter()
+.append("text")
+.attr("class","stringLabel")
+.attr("x",-10)
+.attr("y",(d,i)=>i*fretHeight+4)
+.text(d=>d)
+.attr("fill","#aaa");
+
+// update function to highlight scale notes
+function updateFretboard(){
+  const root=+rootSel.property("value");
+  const scale=scales[scaleSel.property("value")];
+
+  fretNodes.attr("fill",d=>{
+    const interval=(d.pitch - root + 12)%12;
+    if(scale.includes(interval)) return "#1db954"; // scale note
+    else return "#222"; // outside scale
+  });
+}
+
+// call update when selectors change
+rootSel.on("change",updateFretboard);
+scaleSel.on("change",updateFretboard);
+
+updateFretboard();
+
+</script>
+```

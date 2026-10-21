@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+
+<style>
+
+body{
+ background:#0b0f14;
+ color:white;
+ font-family:system-ui;
+ text-align:center;
+}
+
+svg{
+ background:radial-gradient(circle,#111 0%,#05070a 70%);
+}
+
+.controls{
+ margin-bottom:15px;
+}
+
+.note circle{
+ fill:#222;
+ stroke:#555;
+}
+
+.note.active circle{
+ fill:#1db954;
+}
+
+.note text{
+ fill:white;
+ font-size:13px;
+ pointer-events:none;
+}
+
+.note.active text{
+ fill:black;
+ font-weight:bold;
+}
+
+.scale{
+ fill:rgba(30,200,120,0.15);
+ stroke:#1db954;
+ stroke-width:3;
+ stroke-linejoin:round;
+ stroke-linecap:round;
+}
+
+.chord{
+ fill:rgba(255,180,60,0.15);
+ stroke:#ffb43c;
+ stroke-width:3;
+ stroke-linejoin:round;
+ stroke-linecap:round;
+}
+
+.interval{
+ fill:#aaa;
+ font-size:12px;
+ letter-spacing:1px;
+}
+
+.fretboard circle{
+ stroke:#555;
+ stroke-width:1.5px;
+}
+
+.fretboard text{
+ fill:#aaa;
+ font-size:10px;
+ text-anchor:middle;
+}
+
+button{
+ margin-left:10px;
+ padding:4px 10px;
+}
+
+</style>
+
+<h2>Harmonic Geometry Pitch Clock with Guitar Fretboard Labels</h2>
+
+<div class="controls">
+
+Root
+<select id="root"></select>
+
+Scale
+<select id="scale">
+<option value="major">Major</option>
+<option value="minor">Minor</option>
+<option value="dorian">Dorian</option>
+<option value="pentatonic">Pentatonic</option>
+</select>
+
+Chord
+<select id="chord">
+<option value="none">None</option>
+<option value="maj">Major triad</option>
+<option value="min">Minor triad</option>
+<option value="dom7">Dominant 7</option>
+<option value="maj7">Major 7</option>
+</select>
+
+<br><br>
+
+Animation Speed
+<input id="speed" type="range" min="200" max="4000" value="1000" step="100">
+<span id="speedLabel">1000 ms</span>
+
+<br><br>
+
+Animate
+<select id="animateMode">
+<option value="none">Off</option>
+<option value="roots">Cycle Roots</option>
+<option value="scales">Cycle Scales</option>
+</select>
+
+<button id="toggleAnim">Start</button>
+
+</div>
+
+<svg width="900" height="560"></svg>
+
+<script>
+
+const notes=["C","C#","D","D#","E","F","F#","G","G#","A","A#","B"];
+const intervalLabels=["1","♭2","2","♭3","3","4","♭5","5","♭6","6","♭7","7"];
+
+const scales={
+  major:[0,2,4,5,7,9,11],
+  minor:[0,2,3,5,7,8,10],
+  dorian:[0,2,3,5,7,9,10],
+  pentatonic:[0,2,4,7,9]
+};
+
+const chords={
+  maj:[0,4,7],
+  min:[0,3,7],
+  dom7:[0,4,7,10],
+  maj7:[0,4,7,11]
+};
+
+const scaleNames=Object.keys(scales);
+
+const width=900;
+const height=560;
+const radius=180;
+const polyInset=20;
+const intervalRadius=radius+50;
+
+let duration=1000;
+let animTimer=null;
+
+const svg=d3.select("svg")
+.append("g")
+.attr("transform",`translate(${radius+120},${height/2})`);
+
+const angle=d3.scaleLinear().domain([0,12]).range([0,Math.PI*2]);
+
+function pos(i,radiusOffset=0){
+ const a=angle(i)-Math.PI/2;
+ return [
+   Math.cos(a)*(radius-radiusOffset),
+   Math.sin(a)*(radius-radiusOffset)
+ ]
+}
+
+function intervalPos(i){
+ const a=angle(i)-Math.PI/2;
+ return [
+   Math.cos(a)*intervalRadius,
+   Math.sin(a)*intervalRadius
+ ]
+}
+
+// root selector
+const rootSel=d3.select("#root");
+notes.forEach((n,i)=> rootSel.append("option").attr("value",i).text(n));
+
+// speed slider
+const speedSlider=d3.select("#speed")
+const speedLabel=d3.select("#speedLabel")
+speedSlider.on("input",function(){
+ duration=+this.value;
+ speedLabel.text(duration+" ms");
+})
+
+// PATHS FIRST
+const scaleShape=svg.append("path").attr("class","scale");
+const chordShape=svg.append("path").attr("class","chord");
+
+// notes
+const noteGroup=svg.selectAll(".note")
+.data(notes)
+.enter()
+.append("g")
+.attr("class","note")
+.attr("transform",(d,i)=>{
+ const [x,y]=pos(i,0)
+ return `translate(${x},${y})`
+})
+
+noteGroup.append("circle").attr("r",20);
+noteGroup.append("text")
+.attr("dy",".35em")
+.attr("text-anchor","middle")
+.text(d=>d);
+
+// interval labels
+const intervalGroup=svg.selectAll(".interval")
+.data(notes)
+.enter()
+.append("text")
+.attr("class","interval")
+.attr("text-anchor","middle")
+.attr("alignment-baseline","middle")
+.attr("transform",(d,i)=>{
+ const [x,y]=intervalPos(i)
+ return `translate(${x},${y})`
+})
+
+// fretboard overlay
+const strings=["E","A","D","G","B","e"];
+const tuning=[4,9,2,7,11,4]; // pitch classes
+const frets=13;
+const fretGroup=svg.append("g").attr("transform","translate(400,-140)").attr("class","fretboard");
+const fretWidth=30;
+const fretHeight=25;
+
+const fretsData=[];
+strings.forEach((s,i)=>{
+  for(let f=0;f<frets;f++){
+    fretsData.push({string:i,fret:f,pitch:(tuning[i]+f)%12});
+  }
+});
+
+const fretNodes=fretGroup.selectAll(".fret")
+.data(fretsData)
+.enter()
+.append("circle")
+.attr("class","fret")
+.attr("cx",d=>d.fret*fretWidth)
+.attr("cy",d=>d.string*fretHeight)
+.attr("r",10)
+.attr("fill","#222")
+.attr("stroke","#555");
+
+// fret numbers
+fretGroup.selectAll(".fretNum")
+.data(d3.range(frets))
+.enter()
+.append("text")
+.attr("class","fretNum")
+.attr("x",d=>d*fretWidth)
+.attr("y",-8)
+.text(d=>d)
+.attr("font-size","10px")
+.attr("fill","#aaa")
+.attr("text-anchor","middle");
+
+// string labels
+fretGroup.selectAll(".stringLabel")
+.data(strings)
+.enter()
+.append("text")
+.attr("class","stringLabel")
+.attr("x",-12)
+.attr("y",d=>strings.indexOf(d)*fretHeight+4)
+.text(d=>d)
+.attr("font-size","12px")
+.attr("fill","#aaa")
+.attr("text-anchor","end");
+
+// path generator
+const line=d3.line()
+.x(d=>d[0])
+.y(d=>d[1])
+.curve(d3.curveLinearClosed);
+
+function update(){
+
+ const root=+rootSel.property("value");
+ const scaleName=d3.select("#scale").property("value");
+ const chordName=d3.select("#chord").property("value");
+ const scale=scales[scaleName];
+
+ // highlight notes
+ noteGroup.classed("active",(d,i)=>{
+   const p=(i-root+12)%12;
+   return scale.includes(p);
+ })
+
+ // interval labels
+ intervalGroup.text((d,i)=>{
+   const interval=(i-root+12)%12;
+   return intervalLabels[interval];
+ })
+
+ // scale polygon
+ const scalePts=scale.map(step=>pos((root+step),polyInset))
+ scaleShape.transition().duration(duration).attr("d",line(scalePts));
+
+ // chord polygon
+ if(chordName!=="none"){
+   const chordPts=chords[chordName].map(step=>pos((root+step),polyInset));
+   chordShape.transition().duration(duration).attr("d",line(chordPts)).style("opacity",1);
+ }else{
+   chordShape.style("opacity",0);
+ }
+
+ // fretboard colors
+ fretNodes.attr("fill",d=>{
+   const p=(d.pitch-root+12)%12;
+   if(chordName!=="none" && chords[chordName].includes(p)) return "#ffb43c";
+   else if(scale.includes(p)) return "#1db954";
+   else return "#222";
+ });
+}
+
+// animation
+function stepAnimation(){
+ const mode=d3.select("#animateMode").property("value");
+ if(mode==="roots"){
+   let r=(+rootSel.property("value")+1)%12;
+   rootSel.property("value",r);
+ }
+ if(mode==="scales"){
+   const current=d3.select("#scale").property("value");
+   let i=(scaleNames.indexOf(current)+1)%scaleNames.length;
+   d3.select("#scale").property("value",scaleNames[i]);
+ }
+ update();
+}
+
+d3.select("#toggleAnim").on("click",function(){
+ if(animTimer){
+   clearInterval(animTimer);
+   animTimer=null;
+   this.textContent="Start";
+ }else{
+   animTimer=setInterval(stepAnimation,duration+50);
+   this.textContent="Stop";
+ }
+});
+
+d3.select("#scale").on("change",update)
+d3.select("#chord").on("change",update)
+rootSel.on("change",update);
+
+update();
+
+</script>
+```
+
+
