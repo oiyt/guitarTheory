@@ -1,3 +1,4 @@
+
 Links:
 
 https://appliedguitartheory.com/lessons/a-minor-pentatonic-scale/
@@ -46,15 +47,17 @@ Minor pentatonic scale position 1. No Woman No Cry
 ![A description of the squirrel](./images/minorPentatonicScalePosition_1_NoWomanNoCry.png)
 
 <div class=example>
+
 <h3>Let There Be Rock - AC/DC</h3>
 
 ![Let there be rock](./images/letThereBeRock_1.png)
+
 </div>
 
 <div class=example>
+
 <h3>Whole Lotta Rosie - AC/DC</h3>
 
 ![whole lotta rosie](./images/wholeLottaRosie_1.png)
-</div>
 
-<iframe src="fretboard.html" width="900" height="350" style="border:none;"></iframe>
+</div>
