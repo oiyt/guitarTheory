@@ -1,6 +1,8 @@
 Links:
+
 https://appliedguitartheory.com/lessons/a-minor-pentatonic-scale/
-https://www.oolimo.com/en/chord-types/maj7
+
+https://www.oolimo.com/
 
 If we compare a piano keyobard to a guitar fretboard we have the following.
 
@@ -30,23 +32,29 @@ Minor pentatonic scale.
 
 Minor pentatonic scale Fretboard.
 
-![Fretboard](./images/minorPentatonicScaleFretboard.png)
+![Fretboard scale positions](./images/guitarFretboard.png)
+
+![A description of the squirrel](./images/minorPentatonicScaleFretboard.png)
 
 
 Minor pentatonic scale position 1.
 
-![Position 1](./images/minorPentatonicScalePosition_1.png)
+![A description of the squirrel](./images/minorPentatonicScalePosition_1.png)
 
 Minor pentatonic scale position 1. No Woman No Cry
 
-![No Woman No Cry](./images/minorPentatonicScalePosition_1_NoWomanNoCry.png)
+![A description of the squirrel](./images/minorPentatonicScalePosition_1_NoWomanNoCry.png)
 
-Minor pentatonic scale position 3
+<div class=example>
+<h3>Let There Be Rock - AC/DC</h3>
 
-![Position 4](./images/minorPentatonicScalePosition_3.png)
+![Let there be rock](./images/letThereBeRock_1.png)
+</div>
 
-Minor pentatonic scale position 4
+<div class=example>
+<h3>Whole Lotta Rosie - AC/DC</h3>
 
-![Position 4](./images/minorPentatonicScalePosition_4.png)
+![whole lotta rosie](./images/wholeLottaRosie_1.png)
+</div>
 
 <iframe src="fretboard.html" width="900" height="350" style="border:none;"></iframe>
